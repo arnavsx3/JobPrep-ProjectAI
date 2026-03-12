@@ -1,0 +1,19 @@
+import { ApiError } from "../utils/api-error";
+
+const errorMiddleware = (err, req, res, next) => {
+  console.error("Real err: ", err);
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: err.success,
+      message: err.message,
+      errors: err.errors,
+    });
+  }else{
+    return res.status(500).json({
+        success:false,
+        message:"Internal server error"
+    })
+  }
+};
+
+export {errorMiddleware}
