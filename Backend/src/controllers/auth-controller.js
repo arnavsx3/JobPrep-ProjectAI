@@ -31,14 +31,14 @@ const registerUserController = asyncHandler(async (req, res) => {
     password: hash,
   });
   const token = jwt.sign(
-    { id: user._id, username: user.username },
+    { _id: user._id, username: user.username },
     process.env.JWT_SECRET,
     {
       expiresIn: "1d",
     },
   );
   const registeredUser = {
-    id: user._id,
+    _id: user._id,
     username: user.username,
     email: user.email,
   };
@@ -68,7 +68,7 @@ const loginUserController = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid credentials");
   }
   const token = jwt.sign(
-    { id: user._id, username: user.username },
+    { _id: user._id, username: user.username },
     process.env.JWT_SECRET,
     { expiresIn: "1d" },
   );
@@ -94,7 +94,7 @@ const logoutUserController = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite:"strict",
+    sameSite: "strict",
   };
   return res
     .status(200)
@@ -107,6 +107,16 @@ const logoutUserController = asyncHandler(async (req, res) => {
  * @description Get current logged-in user details
  * @access Private
  */
-const getMeController = asyncHandler(async (req, res) => {});
+const getMeController = asyncHandler(async (req, res) => {
+  const user = req.user;
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User profile fetched", user));
+});
 
-export { registerUserController, loginUserController, logoutUserController };
+export {
+  registerUserController,
+  loginUserController,
+  logoutUserController,
+  getMeController,
+};

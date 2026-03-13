@@ -3,6 +3,7 @@ import {
   loginUserController,
   registerUserController,
   logoutUserController,
+  getMeController
 } from "../controllers/auth-controller.js";
 import { verifyJWT } from "../middlewares/auth-middleware.js";
 
