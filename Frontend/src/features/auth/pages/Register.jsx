@@ -1,13 +1,25 @@
 import React from "react";
 import "../auth-form.scss";
-import { useNavigate,Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.js";
 
 const Register = () => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    const navigate = useNavigate();
-  const handleSubmit = (e) => {
+  const {loading,handleRegister} = useAuth
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    await handleRegister({ username, email, password });
+    navigate("/")
   };
+  if(loading){
+    return(<main><h1>Loading...</h1></main>)
+  }
   return (
     <main>
       <div className="form-container">
@@ -20,6 +32,7 @@ const Register = () => {
               name="username"
               id="username"
               placeholder="Enter username"
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className="input-group">
@@ -29,6 +42,7 @@ const Register = () => {
               name="email"
               id="email"
               placeholder="Enter e-mail address"
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="input-group">
@@ -38,6 +52,7 @@ const Register = () => {
               name="password"
               id="password"
               placeholder="Enter password"
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <button type="submit" className="button primary-button">
@@ -45,10 +60,7 @@ const Register = () => {
           </button>
         </form>
         <p>
-            Already have an account?{" "}
-            <Link to = "/login">
-                Login here
-            </Link>
+          Already have an account? <Link to="/login">Login here</Link>
         </p>
       </div>
     </main>

@@ -44,7 +44,7 @@ const registerUserController = asyncHandler(async (req, res) => {
   };
   const options = {
     httpOnly: true,
-    secure: true,
+    secure:true,
   };
   return res
     .status(201)
@@ -74,7 +74,7 @@ const loginUserController = asyncHandler(async (req, res) => {
   );
   const options = {
     httpOnly: true,
-    secure: true,
+    secure:true,
   };
   const loggedInUser = await userModel.findById(user._id).select("-password");
   return res
@@ -93,7 +93,7 @@ const logoutUserController = asyncHandler(async (req, res) => {
   }
   const options = {
     httpOnly: true,
-    secure: true,
+    secure:true,
     sameSite: "strict",
   };
   return res
