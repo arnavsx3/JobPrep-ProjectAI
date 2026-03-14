@@ -63,7 +63,7 @@ const loginUserController = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(400, "Invalid credentials");
   }
-  const isPasswordValid = await bcrpyt.compare(password, user.password);
+  const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
     throw new ApiError(400, "Invalid credentials");
   }
