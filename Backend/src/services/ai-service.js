@@ -1,98 +1,120 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { ApiError } from "../utils/api-error.js";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GENAI_API_KEY,
 });
 
-const zodIntReportSchema = z.object({
-  matchScore: z
-    .number()
-    .describe(
-      "A score between 0 and 100 indicating how well the candidate's profile matches the job description, based on their resume and self-description.",
-    ),
+const geminiSchema = {
+  type: Type.OBJECT,
+  properties: {
+    matchScore: {
+      type: Type.NUMBER,
+    },
+    technicalQuestions: {
+      type: Type.ARRAY,
+      minItems: 5,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          question: { type: Type.STRING },
+          intention: { type: Type.STRING },
+          answer: { type: Type.STRING },
+        },
+        required: ["question", "intention", "answer"],
+      },
+    },
+    behavioralQuestions: {
+      type: Type.ARRAY,
+      minItems: 5,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          question: { type: Type.STRING },
+          intention: { type: Type.STRING },
+          answer: { type: Type.STRING },
+        },
+        required: ["question", "intention", "answer"],
+      },
+    },
+    skillGaps: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          skill: { type: Type.STRING },
+          severity: {
+            type: Type.STRING,
+            enum: ["low", "medium", "high"],
+          },
+        },
+        required: ["skill", "severity"],
+      },
+    },
+    prepPlan: {
+      type: Type.ARRAY,
+      minItems: 7,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          day: { type: Type.NUMBER },
+          focus: { type: Type.STRING },
+          tasks: {
+            type: Type.ARRAY,
+            minItems: 3,
+            items: { type: Type.STRING },
+          },
+        },
+        required: ["day", "focus", "tasks"],
+      },
+    },
+  },
+  required: [
+    "matchScore",
+    "technicalQuestions",
+    "behavioralQuestions",
+    "skillGaps",
+    "prepPlan",
+  ],
+};
 
+const zodIntReportSchema = z.object({
+  matchScore: z.number().min(0).max(100),
   technicalQuestions: z
     .array(
       z.object({
-        question: z
-          .string()
-          .describe("The technical question asked during the interview."),
-        intention: z
-          .string()
-          .describe("The intention behind asking the technical question."),
-        answer: z
-          .string()
-          .describe(
-            "How to answer this question, what points to cover, and how to structure the answer.",
-          ),
+        question: z.string(),
+        intention: z.string(),
+        answer: z.string(),
       }),
     )
-    .describe(
-      "A list of technical questions asked during the interview, along with their intentions and the candidate's answers.",
-    ),
-
+    .min(5),
   behavioralQuestions: z
     .array(
       z.object({
-        question: z
-          .string()
-          .describe("The behavioral question asked during the interview."),
-        intention: z
-          .string()
-          .describe("The intention behind asking the behavioral question."),
-        answer: z
-          .string()
-          .describe(
-            "How to answer this question, what points to cover, and how to structure the answer.",
-          ),
+        question: z.string(),
+        intention: z.string(),
+        answer: z.string(),
       }),
     )
-    .describe(
-      "A list of behavioral questions asked during the interview, along with their intentions and the candidate's answers.",
-    ),
-
-  skillGaps: z
-    .array(
-      z.object({
-        skill: z
-          .string()
-          .describe(
-            "The skill that the candidate is lacking based on the interview performance.",
-          ),
-        severity: z
-          .enum(["low", "medium", "high"])
-          .describe(
-            "The severity of the skill gap, indicating how critical it is for the candidate to improve this skill.",
-          ),
-      }),
-    )
-    .describe(
-      "A list of skill gaps identified during the interview, along with their severity levels.",
-    ),
-
+    .min(5),
+  skillGaps: z.array(
+    z.object({
+      skill: z.string(),
+      severity: z.enum(["low", "medium", "high"]),
+    }),
+  ),
   prepPlan: z
     .array(
       z.object({
-        day: z
-          .number()
-          .describe(
-            "The day number in the preparation plan, indicating the sequence of the preparation tasks.",
-          ),
-        focus: z
-          .string()
-          .describe("The main focus or topic for that day of preparation."),
-        tasks: z
-          .array(z.string())
-          .describe(
-            "A list of specific tasks or activities that the candidate should complete on that day to prepare for future interviews.",
-          ),
+        day: z.number(),
+        focus: z.string(),
+        tasks: z.array(z.string()).min(3),
       }),
     )
-    .describe(
-      "A detailed preparation plan for the candidate, outlining daily focuses and tasks to improve their interview performance.",
-    ),
+    .min(7),
 });
 
 export const genInterviewReport = async ({
@@ -100,19 +122,34 @@ export const genInterviewReport = async ({
   selfDescription,
   jobDescription,
 }) => {
-  const prompt = `Generate an interview report for a candidate according to the zod object schema given to you:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
+  const prompt = `
+  You are an AI interview coach. Analyze the candidate details and generate a structured interview preparation report.
+
+  Resume: ${resume}
+  Self Description: ${selfDescription}
+  Job Description: ${jobDescription}
+
+  Requirements:
+  - matchScore: number between 0-100
+  - technicalQuestions: at least 5 items with question, intention, and answer
+  - behavioralQuestions: at least 5 items with question, intention, and answer (use STAR method for answers)
+  - skillGaps: list missing skills, severity must be "low", "medium", or "high"
+  - prepPlan: at least 7 days, each with a focus and minimum 3 tasks
 `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-flash-lite-preview",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
-      responseSchema: zodToJsonSchema(zodIntReportSchema),
+      responseSchema: geminiSchema,
     },
   });
-  console.log(JSON.parse(response.text));
+
+  const raw = JSON.parse(response.text);
+  const validated = zodIntReportSchema.safeParse(raw);
+  if (!validated.success) {
+    throw new ApiError(500, "Invalid response structure from Gemini");
+  }
+  return validated.data;
 };

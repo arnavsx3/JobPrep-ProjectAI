@@ -14,8 +14,3 @@ connectDB()
     console.error("MongoDB connection error", err);
     process.exit(1);
   });
-
-import { resume, selfDescription, jobDescription } from "./services/temp.js";
-import { genInterviewReport } from "./services/ai-service.js";
-
-genInterviewReport({ resume, selfDescription, jobDescription });

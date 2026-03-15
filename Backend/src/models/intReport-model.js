@@ -87,8 +87,12 @@ const interviewReportSchema = new Schema(
     },
     technicalQuestions: [techQuestionSchema],
     behavioralQuestions: [behavioralQuestionSchema],
-    skillGap: [skillGapSchema],
+    skillGaps: [skillGapSchema],
     prepPlan: [prepPlanSchema],
+    user:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"users"
+    }
   },
   { timestamps: true },
 );

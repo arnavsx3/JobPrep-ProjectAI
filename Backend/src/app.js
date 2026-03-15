@@ -21,12 +21,14 @@ app.use(cookieParser());
  */
 import { authRouter } from "./routes/auth-routes.js";
 import { hcRouter } from "./routes/healthCheck-routes.js";
+import { interviewRouter } from "./routes/interview-routes.js";
 
 /**
  * @description use the routers here
  */
 app.use("/api/auth", authRouter);
 app.use("/api/test", hcRouter);
+app.use("/api/interview",interviewRouter)
 
 /**
  * @description error-middleware to handle errors
