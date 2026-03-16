@@ -41,6 +41,7 @@ const geminiSchema = {
     },
     skillGaps: {
       type: Type.ARRAY,
+      minItems: 3,
       items: {
         type: Type.OBJECT,
         properties: {
@@ -70,6 +71,9 @@ const geminiSchema = {
         required: ["day", "focus", "tasks"],
       },
     },
+    title: {
+      type: Type.STRING,
+    },
   },
   required: [
     "matchScore",
@@ -77,6 +81,7 @@ const geminiSchema = {
     "behavioralQuestions",
     "skillGaps",
     "prepPlan",
+    "title",
   ],
 };
 
@@ -100,12 +105,14 @@ const zodIntReportSchema = z.object({
       }),
     )
     .min(5),
-  skillGaps: z.array(
-    z.object({
-      skill: z.string(),
-      severity: z.enum(["low", "medium", "high"]),
-    }),
-  ),
+  skillGaps: z
+    .array(
+      z.object({
+        skill: z.string(),
+        severity: z.enum(["low", "medium", "high"]),
+      }),
+    )
+    .min(3),
   prepPlan: z
     .array(
       z.object({
@@ -115,6 +122,7 @@ const zodIntReportSchema = z.object({
       }),
     )
     .min(7),
+  title: z.string(),
 });
 
 export const genInterviewReport = async ({
@@ -138,7 +146,7 @@ export const genInterviewReport = async ({
 `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite-preview",
+    model: "gemini-3-flash-preview",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
